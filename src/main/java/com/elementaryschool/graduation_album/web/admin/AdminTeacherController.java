@@ -4,7 +4,6 @@ import com.elementaryschool.graduation_album.domain.Classroom;
 import com.elementaryschool.graduation_album.domain.Teacher;
 import com.elementaryschool.graduation_album.repository.ClassroomRepository;
 import com.elementaryschool.graduation_album.repository.TeacherRepository;
-import com.elementaryschool.graduation_album.storage.FileStorageService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -23,14 +22,11 @@ public class AdminTeacherController {
 
     private final TeacherRepository teacherRepository;
     private final ClassroomRepository classroomRepository;
-    private final FileStorageService fileStorageService;
 
     public AdminTeacherController(TeacherRepository teacherRepository,
-                                  ClassroomRepository classroomRepository,
-                                  FileStorageService fileStorageService) {
+                                  ClassroomRepository classroomRepository) {
         this.teacherRepository = teacherRepository;
         this.classroomRepository = classroomRepository;
-        this.fileStorageService = fileStorageService;
     }
 
     @GetMapping
@@ -68,17 +64,12 @@ public class AdminTeacherController {
                     .stream().sorted((a, b) -> Integer.compare(a.getClassNum(), b.getClassNum())).toList());
             return "admin/teacher-form";
         }
-        teacherRepository.save(teacher);
         try {
             if (teacherPhotoFile != null && !teacherPhotoFile.isEmpty()) {
-                String path = fileStorageService.save(teacherPhotoFile, "Photos/teachers", teacher.getId() + "_photo");
-                teacher.setTeacherPhotoUrl(path);
-                teacher.setTeacherPhoto(null);
+                teacher.setTeacherPhoto(teacherPhotoFile.getBytes());
             }
             if (teacherVideoLetterFile != null && !teacherVideoLetterFile.isEmpty()) {
-                String path = fileStorageService.save(teacherVideoLetterFile, "Videos/teachers", teacher.getId() + "_video");
-                teacher.setTeacherVideoLetterUrl(path);
-                teacher.setTeacherVideoLetter(null);
+                teacher.setTeacherVideoLetter(teacherVideoLetterFile.getBytes());
             }
         } catch (IOException e) {
             model.addAttribute("error", "파일 업로드 실패: " + e.getMessage());
@@ -135,14 +126,10 @@ public class AdminTeacherController {
         
         try {
             if (teacherPhotoFile != null && !teacherPhotoFile.isEmpty()) {
-                String path = fileStorageService.save(teacherPhotoFile, "Photos/teachers", teacher.getId() + "_photo");
-                teacher.setTeacherPhotoUrl(path);
-                teacher.setTeacherPhoto(null);
+                teacher.setTeacherPhoto(teacherPhotoFile.getBytes());
             }
             if (teacherVideoLetterFile != null && !teacherVideoLetterFile.isEmpty()) {
-                String path = fileStorageService.save(teacherVideoLetterFile, "Videos/teachers", teacher.getId() + "_video");
-                teacher.setTeacherVideoLetterUrl(path);
-                teacher.setTeacherVideoLetter(null);
+                teacher.setTeacherVideoLetter(teacherVideoLetterFile.getBytes());
             }
         } catch (IOException e) {
             model.addAttribute("error", "파일 업로드 실패: " + e.getMessage());

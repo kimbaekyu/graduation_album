@@ -2,7 +2,6 @@ package com.elementaryschool.graduation_album.web.admin;
 
 import com.elementaryschool.graduation_album.domain.Classroom;
 import com.elementaryschool.graduation_album.repository.ClassroomRepository;
-import com.elementaryschool.graduation_album.storage.FileStorageService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -20,12 +19,9 @@ import java.io.IOException;
 public class AdminClassroomController {
 
     private final ClassroomRepository classroomRepository;
-    private final FileStorageService fileStorageService;
 
-    public AdminClassroomController(ClassroomRepository classroomRepository,
-                                    FileStorageService fileStorageService) {
+    public AdminClassroomController(ClassroomRepository classroomRepository) {
         this.classroomRepository = classroomRepository;
-        this.fileStorageService = fileStorageService;
     }
 
     @GetMapping
@@ -51,23 +47,22 @@ public class AdminClassroomController {
                          BindingResult bindingResult,
                          @RequestParam(value = "groupPhotoFile", required = false) MultipartFile groupPhotoFile,
                          @RequestParam(value = "videoLetterFile", required = false) MultipartFile videoLetterFile,
+                         @RequestParam(value = "studentVideoLetterFile", required = false) MultipartFile studentVideoLetterFile,
                          Model model) {
         AdminGuard.requireAdmin(session);
         if (bindingResult.hasErrors()) {
             model.addAttribute("error", "입력 오류가 있습니다.");
             return "admin/class-form";
         }
-        classroomRepository.save(classroom);
         try {
             if (groupPhotoFile != null && !groupPhotoFile.isEmpty()) {
-                String path = fileStorageService.save(groupPhotoFile, "Photos/classrooms/group", classroom.getId() + "_group");
-                classroom.setClassGroupPhotoUrl(path);
-                classroom.setClassGroupPhoto(null);
+                classroom.setClassGroupPhoto(groupPhotoFile.getBytes());
             }
             if (videoLetterFile != null && !videoLetterFile.isEmpty()) {
-                String path = fileStorageService.save(videoLetterFile, "Videos/classrooms", classroom.getId() + "_video");
-                classroom.setClassVideoLetterUrl(path);
-                classroom.setClassVideoLetter(null);
+                classroom.setClassVideoLetter(videoLetterFile.getBytes());
+            }
+            if (studentVideoLetterFile != null && !studentVideoLetterFile.isEmpty()) {
+                classroom.setStudentVideoLetter(studentVideoLetterFile.getBytes());
             }
         } catch (IOException e) {
             model.addAttribute("error", "파일 업로드 실패: " + e.getMessage());
@@ -93,6 +88,7 @@ public class AdminClassroomController {
                        BindingResult bindingResult,
                        @RequestParam(value = "groupPhotoFile", required = false) MultipartFile groupPhotoFile,
                        @RequestParam(value = "videoLetterFile", required = false) MultipartFile videoLetterFile,
+                       @RequestParam(value = "studentVideoLetterFile", required = false) MultipartFile studentVideoLetterFile,
                        Model model) {
         AdminGuard.requireAdmin(session);
         if (bindingResult.hasErrors()) {
@@ -110,14 +106,13 @@ public class AdminClassroomController {
         
         try {
             if (groupPhotoFile != null && !groupPhotoFile.isEmpty()) {
-                String path = fileStorageService.save(groupPhotoFile, "Photos/classrooms/group", classroom.getId() + "_group");
-                classroom.setClassGroupPhotoUrl(path);
-                classroom.setClassGroupPhoto(null);
+                classroom.setClassGroupPhoto(groupPhotoFile.getBytes());
             }
             if (videoLetterFile != null && !videoLetterFile.isEmpty()) {
-                String path = fileStorageService.save(videoLetterFile, "Videos/classrooms", classroom.getId() + "_video");
-                classroom.setClassVideoLetterUrl(path);
-                classroom.setClassVideoLetter(null);
+                classroom.setClassVideoLetter(videoLetterFile.getBytes());
+            }
+            if (studentVideoLetterFile != null && !studentVideoLetterFile.isEmpty()) {
+                classroom.setStudentVideoLetter(studentVideoLetterFile.getBytes());
             }
         } catch (IOException e) {
             model.addAttribute("error", "파일 업로드 실패: " + e.getMessage());

@@ -33,7 +33,7 @@ public class AdminAuthController {
                         Model model) {
         // 간단 구현(노션 요구: 로그인만 있으면 됨)
         // 실제 운영이라면 Spring Security + 암호화된 저장소로 교체하세요.
-        if ("admin".equals(username) && "admin".equals(password)) {
+        if ("REMOVED_USERNAME".equals(username) && "REMOVED_PASSWORD".equals(password)) {
             session.setAttribute(SESSION_KEY, true);
             return "redirect:/admin";
         }

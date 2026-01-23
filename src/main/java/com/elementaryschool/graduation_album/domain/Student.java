@@ -52,13 +52,6 @@ public class Student {
     @Column(columnDefinition = "BLOB")
     private byte[] handLetterPhoto;
 
-    @Size(max = 255)
-    private String studentVideoLetterUrl;
-
-    @Lob
-    @Column(columnDefinition = "BLOB")
-    private byte[] studentVideoLetter;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 1)
     private Gender gender = Gender.M;

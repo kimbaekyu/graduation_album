@@ -26,7 +26,10 @@
             <h1 class="h3 fw-bold mb-1" th:text="${student.name}">이름</h1>
             <div class="text-muted">
                 <span th:text="${student.classroom.classNum} + '반'">1반</span>
-                · 성별 <span th:text="${student.gender}">M</span>
+                · <span th:if="${student.gender == T(com.elementaryschool.graduation_album.domain.Gender).M}">남자</span>
+                <span th:if="${student.gender == T(com.elementaryschool.graduation_album.domain.Gender).W}">
+    여자
+</span>
             </div>
         </div>
         <a class="btn btn-outline-primary" th:href="@{|/classes/${student.classroom.classNum}|}">반 페이지로</a>

@@ -56,6 +56,7 @@ public class Teacher {
     @Column(columnDefinition = "BLOB")
     private byte[] teacherVideoLetter;
 
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 1)
     private Gender gender = Gender.M;

@@ -4,7 +4,6 @@ import com.elementaryschool.graduation_album.domain.Classroom;
 import com.elementaryschool.graduation_album.domain.Student;
 import com.elementaryschool.graduation_album.repository.ClassroomRepository;
 import com.elementaryschool.graduation_album.repository.StudentRepository;
-import com.elementaryschool.graduation_album.storage.FileStorageService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -23,14 +22,11 @@ public class AdminStudentController {
 
     private final StudentRepository studentRepository;
     private final ClassroomRepository classroomRepository;
-    private final FileStorageService fileStorageService;
 
     public AdminStudentController(StudentRepository studentRepository,
-                                  ClassroomRepository classroomRepository,
-                                  FileStorageService fileStorageService) {
+                                  ClassroomRepository classroomRepository) {
         this.studentRepository = studentRepository;
         this.classroomRepository = classroomRepository;
-        this.fileStorageService = fileStorageService;
     }
 
     @GetMapping
@@ -69,23 +65,12 @@ public class AdminStudentController {
                     .stream().sorted((a, b) -> Integer.compare(a.getClassNum(), b.getClassNum())).toList());
             return "admin/student-form";
         }
-        // 먼저 저장해서 ID를 확보한다.
-        studentRepository.save(student);
         try {
             if (personalPhotoFile != null && !personalPhotoFile.isEmpty()) {
-                String path = fileStorageService.save(personalPhotoFile, "Photos/students/personal", student.getId() + "_personal");
-                student.setPersonalPhotoUrl(path);
-                student.setPersonalPhoto(null);
+                student.setPersonalPhoto(personalPhotoFile.getBytes());
             }
             if (handLetterPhotoFile != null && !handLetterPhotoFile.isEmpty()) {
-                String path = fileStorageService.save(handLetterPhotoFile, "Photos/students/hand-letter", student.getId() + "_hand");
-                student.setHandLetterPhotoUrl(path);
-                student.setHandLetterPhoto(null);
-            }
-            if (studentVideoLetterFile != null && !studentVideoLetterFile.isEmpty()) {
-                String path = fileStorageService.save(studentVideoLetterFile, "Videos/students", student.getId() + "_video");
-                student.setStudentVideoLetterUrl(path);
-                student.setStudentVideoLetter(null);
+                student.setHandLetterPhoto(handLetterPhotoFile.getBytes());
             }
         } catch (IOException e) {
             model.addAttribute("error", "파일 업로드 실패: " + e.getMessage());
@@ -137,24 +122,14 @@ public class AdminStudentController {
         student.setTalk(form.getTalk());
         student.setPersonalPhotoUrl(form.getPersonalPhotoUrl());
         student.setHandLetterPhotoUrl(form.getHandLetterPhotoUrl());
-        student.setStudentVideoLetterUrl(form.getStudentVideoLetterUrl());
         student.setGender(form.getGender());
         
         try {
             if (personalPhotoFile != null && !personalPhotoFile.isEmpty()) {
-                String path = fileStorageService.save(personalPhotoFile, "Photos/students/personal", student.getId() + "_personal");
-                student.setPersonalPhotoUrl(path);
-                student.setPersonalPhoto(null);
+                student.setPersonalPhoto(personalPhotoFile.getBytes());
             }
             if (handLetterPhotoFile != null && !handLetterPhotoFile.isEmpty()) {
-                String path = fileStorageService.save(handLetterPhotoFile, "Photos/students/hand-letter", student.getId() + "_hand");
-                student.setHandLetterPhotoUrl(path);
-                student.setHandLetterPhoto(null);
-            }
-            if (studentVideoLetterFile != null && !studentVideoLetterFile.isEmpty()) {
-                String path = fileStorageService.save(studentVideoLetterFile, "Videos/students", student.getId() + "_video");
-                student.setStudentVideoLetterUrl(path);
-                student.setStudentVideoLetter(null);
+                student.setHandLetterPhoto(handLetterPhotoFile.getBytes());
             }
         } catch (IOException e) {
             model.addAttribute("error", "파일 업로드 실패: " + e.getMessage());

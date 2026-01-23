@@ -42,6 +42,14 @@ public class Classroom {
     @Lob
     @Column(columnDefinition = "BLOB")
     private byte[] classVideoLetter;
+
+    @Size(max = 255)
+    private String studentVideoLetterUrl;
+
+    @Lob
+    @Column(columnDefinition = "BLOB")
+    private byte[] studentVideoLetter;
+
 }
 
 

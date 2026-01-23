@@ -73,22 +73,6 @@
                                  class="border rounded" alt="현재 사진">
                         </div>
                     </div>
-                    <div class="col-12">
-                        <label class="form-label">선생님 영상편지</label>
-                        <div class="mb-2">
-                            <input type="file" class="form-control" name="teacherVideoLetterFile" accept="video/*">
-                            <small class="text-muted">파일을 선택하면 H2 DB에 저장됩니다. (선택사항)</small>
-                        </div>
-                        <div class="mb-2">
-                            <label class="form-label small">또는 URL 입력</label>
-                            <input class="form-control" th:field="*{teacherVideoLetterUrl}" placeholder="https://...">
-                        </div>
-                        <div th:if="${teacher.id != null && teacher.teacherVideoLetter != null}" class="mt-2">
-                            <video controls style="max-width: 300px; max-height: 200px;">
-                                <source th:src="@{|/api/files/teachers/${teacher.id}/video-letter|}" type="video/mp4">
-                            </video>
-                        </div>
-                    </div>
                 </div>
                 <div class="d-flex gap-2 mt-4">
                     <button class="btn btn-primary" type="submit">저장</button>

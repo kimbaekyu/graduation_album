@@ -56,8 +56,8 @@
                                  th:src="${teacher.teacherPhoto != null} ? @{|/api/files/teachers/${teacher.id}/photo|} : (${teacher.teacherPhotoUrl != null} ? ${teacher.teacherPhotoUrl} : 'https://placehold.co/200x250?text=Teacher')"
                                  alt="선생님 사진">
                             <div>
-                                <div class="fw-bold" th:text="${teacher.name}">김하나</div>
-                                <div class="small text-muted" th:text="'성별: ' + ${teacher.gender}">성별: W</div>
+                                <div class="fw-bold" th:text="${teacher.name}">선생님 이름</div>
+                                <!-- 선생님 성별 <div class="small text-muted" th:text="'성별: ' + ${teacher.gender}">성별: W</div> -->
                                 <div class="mt-2">
                                     <div class="small fw-bold">급훈</div>
                                     <div class="small" th:text="${teacher.classMotto}">급훈</div>
@@ -100,43 +100,37 @@
                     <div class="desk-grid">
                         <div class="desk" th:each="s : ${students}">
                             <a th:href="@{|/students/${s.id}|}" class="fw-bold" th:text="${s.name}">학생</a>
-                            <div class="small text-muted" th:text="${s.gender}">M</div>
+
+                            <!-- 학생 성별 -->
+                            <!-- <div class="small text-muted" th:text="${s.gender}">M</div> -->
+
+                            <!-- 학생 개인 사진 -->
+                            <img class="rounded border"
+                                 style="width:70px;height:100px;object-fit:cover"
+                                 th:src="${s.personalPhoto != null}
+                                ? @{|/api/files/students/${s.id}/personal-photo|}
+                                : (${s.personalPhotoUrl != null}
+                                    ? ${s.personalPhotoUrl}
+                                    : 'https://placehold.co/100x100?text=Student')"
+                                 alt="학생 사진">
+
                         </div>
-                    </div>
                     <div th:if="${#lists.isEmpty(students)}" class="text-muted mt-2">등록된 학생이 없습니다.</div>
                 </div>
             </div>
-
-            <div class="card shadow-sm" th:if="${!#lists.isEmpty(students)}">
-                <div class="card-body">
-                    <h2 class="h6 fw-bold mb-3">학생들의 영상편지</h2>
-                    <div class="row g-3">
-                        <div class="col-md-6 col-lg-4" th:each="s : ${students}" 
-                             th:if="${s.studentVideoLetter != null || s.studentVideoLetterUrl != null}">
-                            <div class="card border">
-                                <div class="card-body p-2">
-                                    <div class="small fw-bold mb-2" th:text="${s.name}">학생 이름</div>
-                                    <video controls style="width:100%;max-height:200px;border-radius:4px;" 
-                                           th:if="${s.studentVideoLetter != null}">
-                                        <source th:src="@{|/api/files/students/${s.id}/video-letter|}" type="video/mp4">
-                                        브라우저가 비디오 태그를 지원하지 않습니다.
-                                    </video>
-                                    <video controls style="width:100%;max-height:200px;border-radius:4px;" 
-                                           th:if="${s.studentVideoLetter == null && s.studentVideoLetterUrl != null}">
-                                        <source th:src="${s.studentVideoLetterUrl}" type="video/mp4">
-                                        브라우저가 비디오 태그를 지원하지 않습니다.
-                                    </video>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div th:if="${!#lists.isEmpty(students) && #lists.isEmpty(students.?[studentVideoLetter != null || studentVideoLetterUrl != null])}" 
-                         class="text-muted text-center py-3">
-                        등록된 학생 영상편지가 없습니다.
-                    </div>
-                </div>
+            <div th:if="${classroom.studentVideoLetter != null || classroom.studentVideoLetter != null}" class="mb-2">
+                <div class="small fw-bold mb-2 px-3 pt-3">학생들의 영상편지</div>
+                <video controls style="width:100%;max-height:300px;border-radius:8px;"
+                       th:if="${classroom.studentVideoLetter != null}">
+                    <source th:src="@{|/api/files/classrooms/${classroom.id}/student-video-letter|}" type="video/mp4">
+                    브라우저가 비디오 태그를 지원하지 않습니다.
+                </video>
+                <video controls style="width:100%;max-height:300px;border-radius:8px;"
+                       th:if="${classroom.studentVideoLetter == null && classroom.studentVideoLetterUrl != null}">
+                    <source th:src="${classroom.studentVideoLetterUrl}" type="video/mpg">
+                    브라우저가 비디오 태그를 지원하지 않습니다.
+                </video>
             </div>
-        </div>
     </div>
 </main>
 </body>
