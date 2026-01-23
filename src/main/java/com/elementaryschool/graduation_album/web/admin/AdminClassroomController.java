@@ -27,10 +27,12 @@ public class AdminClassroomController {
     @GetMapping
     public String list(HttpSession session, Model model) {
         AdminGuard.requireAdmin(session);
-        model.addAttribute("classrooms", classroomRepository.findAll()
-                .stream()
-                .sorted((a, b) -> Integer.compare(a.getClassNum(), b.getClassNum()))
-                .toList());
+        model.addAttribute("classrooms",
+                classroomRepository.findAll()
+                        .stream()
+                        .sorted((a, b) -> Integer.compare(a.getClassNum(), b.getClassNum()))
+                        .toList()
+        );
         return "admin/classes";
     }
 
@@ -45,38 +47,31 @@ public class AdminClassroomController {
     public String create(HttpSession session,
                          @Valid @ModelAttribute("classroom") Classroom classroom,
                          BindingResult bindingResult,
-                         @RequestParam(value = "groupPhotoFile", required = false) MultipartFile groupPhotoFile,
-                         @RequestParam(value = "videoLetterFile", required = false) MultipartFile videoLetterFile,
-                         @RequestParam(value = "studentVideoLetterFile", required = false) MultipartFile studentVideoLetterFile,
                          Model model) {
+
         AdminGuard.requireAdmin(session);
+
         if (bindingResult.hasErrors()) {
             model.addAttribute("error", "입력 오류가 있습니다.");
             return "admin/class-form";
         }
-        try {
-            if (groupPhotoFile != null && !groupPhotoFile.isEmpty()) {
-                classroom.setClassGroupPhoto(groupPhotoFile.getBytes());
-            }
-            if (videoLetterFile != null && !videoLetterFile.isEmpty()) {
-                classroom.setClassVideoLetter(videoLetterFile.getBytes());
-            }
-            if (studentVideoLetterFile != null && !studentVideoLetterFile.isEmpty()) {
-                classroom.setStudentVideoLetter(studentVideoLetterFile.getBytes());
-            }
-        } catch (IOException e) {
-            model.addAttribute("error", "파일 업로드 실패: " + e.getMessage());
-            return "admin/class-form";
-        }
+
+        // ❗ 파일은 FileController에서 업로드
+        // ❗ 여기서는 경로(String)만 저장
         classroomRepository.save(classroom);
         return "redirect:/admin/classes";
     }
 
     @GetMapping("/{id}/edit")
-    public String editForm(HttpSession session, @PathVariable Long id, Model model) {
+    public String editForm(HttpSession session,
+                           @PathVariable Long id,
+                           Model model) {
+
         AdminGuard.requireAdmin(session);
+
         Classroom classroom = classroomRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+
         model.addAttribute("classroom", classroom);
         return "admin/class-form";
     }
@@ -86,11 +81,10 @@ public class AdminClassroomController {
                        @PathVariable Long id,
                        @Valid @ModelAttribute("classroom") Classroom form,
                        BindingResult bindingResult,
-                       @RequestParam(value = "groupPhotoFile", required = false) MultipartFile groupPhotoFile,
-                       @RequestParam(value = "videoLetterFile", required = false) MultipartFile videoLetterFile,
-                       @RequestParam(value = "studentVideoLetterFile", required = false) MultipartFile studentVideoLetterFile,
                        Model model) {
+
         AdminGuard.requireAdmin(session);
+
         if (bindingResult.hasErrors()) {
             model.addAttribute("error", "입력 오류가 있습니다.");
             return "admin/class-form";
@@ -101,24 +95,17 @@ public class AdminClassroomController {
 
         classroom.setClassNum(form.getClassNum());
         classroom.setHomeroomTeacher(form.getHomeroomTeacher());
+
+        // 📸 사진 / 🎥 영상 경로만 저장
+        classroom.setClassGroupPhoto(form.getClassGroupPhoto());
         classroom.setClassGroupPhotoUrl(form.getClassGroupPhotoUrl());
+
+        classroom.setClassVideoLetter(form.getClassVideoLetter());
         classroom.setClassVideoLetterUrl(form.getClassVideoLetterUrl());
-        
-        try {
-            if (groupPhotoFile != null && !groupPhotoFile.isEmpty()) {
-                classroom.setClassGroupPhoto(groupPhotoFile.getBytes());
-            }
-            if (videoLetterFile != null && !videoLetterFile.isEmpty()) {
-                classroom.setClassVideoLetter(videoLetterFile.getBytes());
-            }
-            if (studentVideoLetterFile != null && !studentVideoLetterFile.isEmpty()) {
-                classroom.setStudentVideoLetter(studentVideoLetterFile.getBytes());
-            }
-        } catch (IOException e) {
-            model.addAttribute("error", "파일 업로드 실패: " + e.getMessage());
-            return "admin/class-form";
-        }
-        
+
+        classroom.setStudentVideoLetter(form.getStudentVideoLetter());
+        classroom.setStudentVideoLetterUrl(form.getStudentVideoLetterUrl());
+
         classroomRepository.save(classroom);
         return "redirect:/admin/classes";
     }
@@ -130,5 +117,6 @@ public class AdminClassroomController {
         return "redirect:/admin/classes";
     }
 }
+
 
 

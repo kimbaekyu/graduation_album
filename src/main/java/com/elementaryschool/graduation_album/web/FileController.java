@@ -9,304 +9,222 @@ import com.elementaryschool.graduation_album.repository.TeacherRepository;
 import com.elementaryschool.graduation_album.web.admin.AdminGuard;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.*;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
+import java.nio.file.Files;
 import java.util.Optional;
 
 @Controller
 @RequiredArgsConstructor
+@RequestMapping("/api/files")
 public class FileController {
+
+    private static final String BASE_PATH =
+            "/volume1/docker/elementary_album/data/";
 
     private final StudentRepository studentRepository;
     private final TeacherRepository teacherRepository;
     private final ClassroomRepository classroomRepository;
 
-    // 학생 개인 사진 조회
-    @GetMapping("/api/files/students/{id}/personal-photo")
-    public ResponseEntity<byte[]> getStudentPersonalPhoto(@PathVariable Long id) {
-        Optional<Student> studentOpt = studentRepository.findById(id);
-        if (studentOpt.isEmpty() || studentOpt.get().getPersonalPhoto() == null) {
-            return ResponseEntity.notFound().build();
-        }
-        Student student = studentOpt.get();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.IMAGE_JPEG);
-        return ResponseEntity.ok().headers(headers).body(student.getPersonalPhoto());
+    /* =====================================================
+     * 📸 사진 조회
+     * ===================================================== */
+
+    @GetMapping("/students/{id}/personal-photo")
+    public ResponseEntity<Resource> studentPhoto(@PathVariable Long id) {
+        return servePhoto(
+                studentRepository.findById(id).map(Student::getPersonalPhoto)
+        );
     }
 
-    // 학생 손편지 사진 조회
-    @GetMapping("/api/files/students/{id}/hand-letter-photo")
-    public ResponseEntity<byte[]> getStudentHandLetterPhoto(@PathVariable Long id) {
-        Optional<Student> studentOpt = studentRepository.findById(id);
-        if (studentOpt.isEmpty() || studentOpt.get().getHandLetterPhoto() == null) {
-            return ResponseEntity.notFound().build();
-        }
-        Student student = studentOpt.get();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.IMAGE_JPEG);
-        return ResponseEntity.ok().headers(headers).body(student.getHandLetterPhoto());
+    @GetMapping("/students/{id}/hand-letter")
+    public ResponseEntity<Resource> studentHandLetter(@PathVariable Long id) {
+        return servePhoto(
+                studentRepository.findById(id).map(Student::getHandLetterPhoto)
+        );
     }
 
-    // 선생님 사진 조회
-    @GetMapping("/api/files/teachers/{id}/photo")
-    public ResponseEntity<byte[]> getTeacherPhoto(@PathVariable Long id) {
-        Optional<Teacher> teacherOpt = teacherRepository.findById(id);
-        if (teacherOpt.isEmpty() || teacherOpt.get().getTeacherPhoto() == null) {
-            return ResponseEntity.notFound().build();
-        }
-        Teacher teacher = teacherOpt.get();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.IMAGE_JPEG);
-        return ResponseEntity.ok().headers(headers).body(teacher.getTeacherPhoto());
+    @GetMapping("/teachers/{id}/photo")
+    public ResponseEntity<Resource> teacherPhoto(@PathVariable Long id) {
+        return servePhoto(
+                teacherRepository.findById(id).map(Teacher::getTeacherPhoto)
+        );
     }
 
-    // 반 단체 사진 조회
-    @GetMapping("/api/files/classrooms/{id}/group-photo")
-    public ResponseEntity<byte[]> getClassroomGroupPhoto(@PathVariable Long id) {
-        Optional<Classroom> classroomOpt = classroomRepository.findById(id);
-        if (classroomOpt.isEmpty() || classroomOpt.get().getClassGroupPhoto() == null) {
-            return ResponseEntity.notFound().build();
-        }
-        Classroom classroom = classroomOpt.get();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.IMAGE_JPEG);
-        return ResponseEntity.ok().headers(headers).body(classroom.getClassGroupPhoto());
+    @GetMapping("/classrooms/{id}/group-photo")
+    public ResponseEntity<Resource> classroomGroupPhoto(@PathVariable Long id) {
+        return servePhoto(
+                classroomRepository.findById(id).map(Classroom::getClassGroupPhoto)
+        );
     }
 
-    // 반 별 담임선생님 영상편지 조회 (시킹 가능)
-    @GetMapping("/api/files/classrooms/{id}/video-letter")
-    public ResponseEntity<byte[]> getClassroomVideoLetter(
+    /* =====================================================
+     * 🎥 영상 조회 (Range 지원)
+     * ===================================================== */
+
+    @GetMapping("/teachers/{id}/video")
+    public ResponseEntity<Resource> teacherVideo(
             @PathVariable Long id,
-            @RequestHeader(value = "Range", required = false) String rangeHeader
+            @RequestHeader(value = "Range", required = false) String range
     ) {
-        Optional<Classroom> classroomOpt = classroomRepository.findById(id);
-        if (classroomOpt.isEmpty() || classroomOpt.get().getClassVideoLetter() == null) {
-            return ResponseEntity.notFound().build();
-        }
-
-        Classroom classroom = classroomOpt.get();
-        byte[] videoBytes = classroom.getClassVideoLetter();
-        long videoLength = videoBytes.length;
-
-        long start = 0;
-        long end = videoLength - 1;
-
-        // ⭐ Range 요청 처리
-        if (rangeHeader != null && rangeHeader.startsWith("bytes=")) {
-            String[] ranges = rangeHeader.replace("bytes=", "").split("-");
-            start = Long.parseLong(ranges[0]);
-            if (ranges.length > 1 && !ranges[1].isEmpty()) {
-                end = Long.parseLong(ranges[1]);
-            }
-        }
-
-        long contentLength = end - start + 1;
-        byte[] data = Arrays.copyOfRange(videoBytes, (int) start, (int) end + 1);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.valueOf("video/mp4"));
-        headers.set("Accept-Ranges", "bytes");
-        headers.set("Content-Range",
-                "bytes " + start + "-" + end + "/" + videoLength);
-        headers.setContentLength(contentLength);
-        headers.setContentDispositionFormData("attachment", "video-letter.mp4");
-
-        return ResponseEntity
-                .status(HttpStatus.PARTIAL_CONTENT) // ⭐ 핵심
-                .headers(headers)
-                .body(data);
+        return serveVideo(
+                teacherRepository.findById(id).map(Teacher::getTeacherVideoLetter),
+                range
+        );
     }
 
-
-    // 반 별 학생 영상편지 조회 (시킹 가능)
-    @GetMapping("/api/files/classrooms/{id}/student-video-letter")
-    public ResponseEntity<byte[]> getStudentVideoLetter(
+    @GetMapping("/classrooms/{id}/student-video")
+    public ResponseEntity<Resource> studentVideo(
             @PathVariable Long id,
-            @RequestHeader(value = "Range", required = false) String rangeHeader
+            @RequestHeader(value = "Range", required = false) String range
     ) {
-        Optional<Classroom> classroomOpt = classroomRepository.findById(id);
-        if (classroomOpt.isEmpty() || classroomOpt.get().getStudentVideoLetter() == null) {
-            return ResponseEntity.notFound().build();
-        }
-
-        Classroom classroom = classroomOpt.get();
-        byte[] videoBytes = classroom.getStudentVideoLetter();
-        long videoLength = videoBytes.length;
-
-        long start = 0;
-        long end = videoLength - 1;
-
-        // ⭐ Range 처리
-        if (rangeHeader != null && rangeHeader.startsWith("bytes=")) {
-            String[] ranges = rangeHeader.replace("bytes=", "").split("-");
-            start = Long.parseLong(ranges[0]);
-            if (ranges.length > 1 && !ranges[1].isEmpty()) {
-                end = Long.parseLong(ranges[1]);
-            }
-        }
-
-        long contentLength = end - start + 1;
-        byte[] data = Arrays.copyOfRange(videoBytes, (int) start, (int) end + 1);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.valueOf("video/mp4"));
-        headers.set("Accept-Ranges", "bytes");
-        headers.set("Content-Range",
-                "bytes " + start + "-" + end + "/" + videoLength);
-        headers.setContentLength(contentLength);
-        headers.setContentDispositionFormData("attachment", "student-video-letter.mp4");
-
-        return ResponseEntity
-                .status(HttpStatus.PARTIAL_CONTENT) // ⭐ 핵심
-                .headers(headers)
-                .body(data);
+        return serveVideo(
+                classroomRepository.findById(id).map(Classroom::getStudentVideoLetter),
+                range
+        );
     }
 
-    // 학생 개인 사진 업로드 (관리자용)
-    @PostMapping("/api/files/students/{id}/personal-photo")
+    /* =====================================================
+     * ⬆️ 업로드 (관리자)
+     * ===================================================== */
+
+    @PostMapping("/students/{id}/personal-photo")
     @ResponseBody
-    public ResponseEntity<String> uploadStudentPersonalPhoto(
+    public ResponseEntity<?> uploadStudentPhoto(
             @PathVariable Long id,
-            @RequestParam("file") MultipartFile file,
-            HttpSession session) {
+            @RequestParam MultipartFile file,
+            HttpSession session
+    ) throws IOException {
         AdminGuard.requireAdmin(session);
-        try {
-            Optional<Student> studentOpt = studentRepository.findById(id);
-            if (studentOpt.isEmpty()) {
-                return ResponseEntity.notFound().build();
-            }
-            Student student = studentOpt.get();
-            student.setPersonalPhoto(file.getBytes());
-            studentRepository.save(student);
-            return ResponseEntity.ok("파일이 업로드되었습니다.");
-        } catch (IOException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("파일 업로드 실패: " + e.getMessage());
-        }
+
+        Student student = studentRepository.findById(id).orElseThrow();
+        String path = saveFile(file, "Photos/students", id + ".jpg");
+        student.setPersonalPhoto(path);
+        studentRepository.save(student);
+
+        return ResponseEntity.ok().build();
     }
 
-    // 학생 손편지 사진 업로드 (관리자용)
-    @PostMapping("/api/files/students/{id}/hand-letter-photo")
+    @PostMapping("/students/{id}/hand-letter")
     @ResponseBody
-    public ResponseEntity<String> uploadStudentHandLetterPhoto(
+    public ResponseEntity<?> uploadHandLetter(
             @PathVariable Long id,
-            @RequestParam("file") MultipartFile file,
-            HttpSession session) {
+            @RequestParam MultipartFile file,
+            HttpSession session
+    ) throws IOException {
         AdminGuard.requireAdmin(session);
-        try {
-            Optional<Student> studentOpt = studentRepository.findById(id);
-            if (studentOpt.isEmpty()) {
-                return ResponseEntity.notFound().build();
-            }
-            Student student = studentOpt.get();
-            student.setHandLetterPhoto(file.getBytes());
-            studentRepository.save(student);
-            return ResponseEntity.ok("파일이 업로드되었습니다.");
-        } catch (IOException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("파일 업로드 실패: " + e.getMessage());
-        }
+
+        Student student = studentRepository.findById(id).orElseThrow();
+        String path = saveFile(file, "Photos/students", id + "_hand.jpg");
+        student.setHandLetterPhoto(path);
+        studentRepository.save(student);
+
+        return ResponseEntity.ok().build();
     }
 
-    // 선생님 사진 업로드 (관리자용)
-    @PostMapping("/api/files/teachers/{id}/photo")
+    @PostMapping("/teachers/{id}/photo")
     @ResponseBody
-    public ResponseEntity<String> uploadTeacherPhoto(
+    public ResponseEntity<?> uploadTeacherPhoto(
             @PathVariable Long id,
-            @RequestParam("file") MultipartFile file,
-            HttpSession session) {
+            @RequestParam MultipartFile file,
+            HttpSession session
+    ) throws IOException {
         AdminGuard.requireAdmin(session);
-        try {
-            Optional<Teacher> teacherOpt = teacherRepository.findById(id);
-            if (teacherOpt.isEmpty()) {
-                return ResponseEntity.notFound().build();
-            }
-            Teacher teacher = teacherOpt.get();
-            teacher.setTeacherPhoto(file.getBytes());
-            teacherRepository.save(teacher);
-            return ResponseEntity.ok("파일이 업로드되었습니다.");
-        } catch (IOException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("파일 업로드 실패: " + e.getMessage());
-        }
+
+        Teacher teacher = teacherRepository.findById(id).orElseThrow();
+        String path = saveFile(file, "Photos/teachers", id + ".jpg");
+        teacher.setTeacherPhoto(path);
+        teacherRepository.save(teacher);
+
+        return ResponseEntity.ok().build();
     }
 
-    // 반 단체 사진 업로드 (관리자용)
-    @PostMapping("/api/files/classrooms/{id}/group-photo")
+    @PostMapping("/teachers/{id}/video")
     @ResponseBody
-    public ResponseEntity<String> uploadClassroomGroupPhoto(
+    public ResponseEntity<?> uploadTeacherVideo(
             @PathVariable Long id,
-            @RequestParam("file") MultipartFile file,
-            HttpSession session) {
+            @RequestParam MultipartFile file,
+            HttpSession session
+    ) throws IOException {
         AdminGuard.requireAdmin(session);
+
+        Teacher teacher = teacherRepository.findById(id).orElseThrow();
+        String path = saveFile(file, "Videos/teachers", id + ".mp4");
+        teacher.setTeacherVideoLetter(path);
+        teacherRepository.save(teacher);
+
+        return ResponseEntity.ok().build();
+    }
+
+    /* =====================================================
+     * 🔧 공통 메서드
+     * ===================================================== */
+
+    private ResponseEntity<Resource> servePhoto(Optional<String> pathOpt) {
+        if (pathOpt.isEmpty()) return ResponseEntity.notFound().build();
+
+        File file = new File(BASE_PATH + pathOpt.get());
+        if (!file.exists()) return ResponseEntity.notFound().build();
+
+        Resource resource = new FileSystemResource(file);
+        return ResponseEntity.ok()
+                .contentType(MediaType.IMAGE_JPEG)
+                .body(resource);
+    }
+
+    private ResponseEntity<Resource> serveVideo(Optional<String> pathOpt, String range)
+    {
+        if (pathOpt.isEmpty()) return ResponseEntity.notFound().build();
+
+        File file = new File(BASE_PATH + pathOpt.get());
+        if (!file.exists()) return ResponseEntity.notFound().build();
+
         try {
-            Optional<Classroom> classroomOpt = classroomRepository.findById(id);
-            if (classroomOpt.isEmpty()) {
-                return ResponseEntity.notFound().build();
+            long fileLength = file.length();
+            long start = 0;
+            long end = fileLength - 1;
+
+            if (range != null && range.startsWith("bytes=")) {
+                String[] parts = range.replace("bytes=", "").split("-");
+                start = Long.parseLong(parts[0]);
+                if (parts.length > 1 && !parts[1].isEmpty()) {
+                    end = Long.parseLong(parts[1]);
+                }
             }
-            Classroom classroom = classroomOpt.get();
-            classroom.setClassGroupPhoto(file.getBytes());
-            classroomRepository.save(classroom);
-            return ResponseEntity.ok("파일이 업로드되었습니다.");
-        } catch (IOException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("파일 업로드 실패: " + e.getMessage());
+
+            Resource resource = new FileSystemResource(file);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.valueOf("video/mp4"));
+            headers.set("Accept-Ranges", "bytes");
+            headers.set("Content-Range",
+                    "bytes " + start + "-" + end + "/" + fileLength);
+            headers.setContentLength(end - start + 1);
+
+            return new ResponseEntity<>(resource, headers, HttpStatus.PARTIAL_CONTENT);
+
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
         }
     }
 
-    // 선생님 영상편지 업로드 (관리자용)
-    @PostMapping("/api/files/classrooms/{id}/video-letter")
-    @ResponseBody
-    public ResponseEntity<String> uploadClassroomVideoLetter(
-            @PathVariable Long id,
-            @RequestParam("file") MultipartFile file,
-            HttpSession session) {
-        AdminGuard.requireAdmin(session);
-        try {
-            Optional<Classroom> classroomOpt = classroomRepository.findById(id);
-            if (classroomOpt.isEmpty()) {
-                return ResponseEntity.notFound().build();
-            }
-            Classroom classroom = classroomOpt.get();
-            classroom.setClassVideoLetter(file.getBytes());
-            classroomRepository.save(classroom);
-            return ResponseEntity.ok("파일이 업로드되었습니다.");
-        } catch (IOException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("파일 업로드 실패: " + e.getMessage());
-        }
-    }
-    // 반 별 학생 영상편지 업로드 (관리자용)
-    @PostMapping("/api/files/classrooms/{id}/student-video-letter")
-    @ResponseBody
-    public ResponseEntity<String> uploadStudentVideoLetter(
-            @PathVariable Long id,
-            @RequestParam("file") MultipartFile file,
-            HttpSession session) {
-        AdminGuard.requireAdmin(session);
-        try {
-            Optional<Classroom> classroomOpt = classroomRepository.findById(id);
-            if (classroomOpt.isEmpty()) {
-                return ResponseEntity.notFound().build();
-            }
-            Classroom classroom = classroomOpt.get();
-            classroom.setStudentVideoLetter(file.getBytes());
-            classroomRepository.save(classroom);
-            return ResponseEntity.ok("파일이 업로드되었습니다.");
-        } catch (IOException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("파일 업로드 실패: " + e.getMessage());
-        }
-    }
+    private String saveFile(MultipartFile file, String dir, String filename)
+            throws IOException {
 
+        File targetDir = new File(BASE_PATH + dir);
+        if (!targetDir.exists()) {
+            Files.createDirectories(targetDir.toPath());
+        }
 
+        File target = new File(targetDir, filename);
+        file.transferTo(target);
+
+        return dir + "/" + filename; // DB에 저장될 상대경로
+    }
 }
-

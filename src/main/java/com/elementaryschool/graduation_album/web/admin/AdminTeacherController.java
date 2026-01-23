@@ -15,10 +15,19 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.UUID;
 
 @Controller
 @RequestMapping("/admin/teachers")
 public class AdminTeacherController {
+
+    private static final String PHOTO_DIR =
+            "/volume1/docker/elementary_album/data/Photos/teachers";
+    private static final String VIDEO_DIR =
+            "/volume1/docker/elementary_album/data/Videos/teachers";
 
     private final TeacherRepository teacherRepository;
     private final ClassroomRepository classroomRepository;
@@ -29,6 +38,8 @@ public class AdminTeacherController {
         this.classroomRepository = classroomRepository;
     }
 
+    /* ===================== 목록 ===================== */
+
     @GetMapping
     public String list(HttpSession session, Model model) {
         AdminGuard.requireAdmin(session);
@@ -36,111 +47,100 @@ public class AdminTeacherController {
         return "admin/teachers";
     }
 
+    /* ===================== 생성 ===================== */
+
     @GetMapping("/new")
     public String createForm(HttpSession session, Model model) {
         AdminGuard.requireAdmin(session);
         model.addAttribute("teacher", new Teacher());
-        model.addAttribute("classrooms", classroomRepository.findAll()
-                .stream().sorted((a, b) -> Integer.compare(a.getClassNum(), b.getClassNum())).toList());
+        model.addAttribute("classrooms", classroomRepository.findAll());
         return "admin/teacher-form";
     }
 
     @PostMapping("/new")
     public String create(HttpSession session,
-                         @Valid @ModelAttribute("teacher") Teacher teacher,
+                         @Valid @ModelAttribute Teacher teacher,
                          BindingResult bindingResult,
-                         @RequestParam("classroomId") Long classroomId,
-                         @RequestParam(value = "teacherPhotoFile", required = false) MultipartFile teacherPhotoFile,
-                         @RequestParam(value = "teacherVideoLetterFile", required = false) MultipartFile teacherVideoLetterFile,
+                         @RequestParam Long classroomId,
+                         @RequestParam(required = false) MultipartFile teacherPhotoFile,
+                         @RequestParam(required = false) MultipartFile teacherVideoLetterFile,
                          Model model) {
+
         AdminGuard.requireAdmin(session);
-        
+
         Classroom classroom = classroomRepository.findById(classroomId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "존재하지 않는 반입니다."));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST));
         teacher.setClassroom(classroom);
-        
+
         if (bindingResult.hasErrors()) {
-            model.addAttribute("classrooms", classroomRepository.findAll()
-                    .stream().sorted((a, b) -> Integer.compare(a.getClassNum(), b.getClassNum())).toList());
+            model.addAttribute("classrooms", classroomRepository.findAll());
             return "admin/teacher-form";
         }
+
         try {
-            if (teacherPhotoFile != null && !teacherPhotoFile.isEmpty()) {
-                teacher.setTeacherPhoto(teacherPhotoFile.getBytes());
-            }
-            if (teacherVideoLetterFile != null && !teacherVideoLetterFile.isEmpty()) {
-                teacher.setTeacherVideoLetter(teacherVideoLetterFile.getBytes());
-            }
+            saveFiles(teacher, teacherPhotoFile, teacherVideoLetterFile);
         } catch (IOException e) {
-            model.addAttribute("error", "파일 업로드 실패: " + e.getMessage());
-            model.addAttribute("classrooms", classroomRepository.findAll()
-                    .stream().sorted((a, b) -> Integer.compare(a.getClassNum(), b.getClassNum())).toList());
+            model.addAttribute("error", "파일 저장 실패");
             return "admin/teacher-form";
         }
+
         teacherRepository.save(teacher);
         return "redirect:/admin/teachers";
     }
 
+    /* ===================== 수정 ===================== */
+
     @GetMapping("/{id}/edit")
     public String editForm(HttpSession session, @PathVariable Long id, Model model) {
         AdminGuard.requireAdmin(session);
-        Teacher teacher = teacherRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        model.addAttribute("teacher", teacher);
-        model.addAttribute("classrooms", classroomRepository.findAll()
-                .stream().sorted((a, b) -> Integer.compare(a.getClassNum(), b.getClassNum())).toList());
+        model.addAttribute("teacher", teacherRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND)));
+        model.addAttribute("classrooms", classroomRepository.findAll());
         return "admin/teacher-form";
     }
 
     @PostMapping("/{id}/edit")
     public String edit(HttpSession session,
                        @PathVariable Long id,
-                       @Valid @ModelAttribute("teacher") Teacher form,
+                       @Valid @ModelAttribute Teacher form,
                        BindingResult bindingResult,
-                       @RequestParam("classroomId") Long classroomId,
-                       @RequestParam(value = "teacherPhotoFile", required = false) MultipartFile teacherPhotoFile,
-                       @RequestParam(value = "teacherVideoLetterFile", required = false) MultipartFile teacherVideoLetterFile,
+                       @RequestParam Long classroomId,
+                       @RequestParam(required = false) MultipartFile teacherPhotoFile,
+                       @RequestParam(required = false) MultipartFile teacherVideoLetterFile,
                        Model model) {
+
         AdminGuard.requireAdmin(session);
-        
-        Classroom classroom = classroomRepository.findById(classroomId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "존재하지 않는 반입니다."));
-        
-        if (bindingResult.hasErrors()) {
-            model.addAttribute("classrooms", classroomRepository.findAll()
-                    .stream().sorted((a, b) -> Integer.compare(a.getClassNum(), b.getClassNum())).toList());
-            return "admin/teacher-form";
-        }
 
         Teacher teacher = teacherRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
-        teacher.setClassroom(classroom);
+        Classroom classroom = classroomRepository.findById(classroomId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST));
+
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("classrooms", classroomRepository.findAll());
+            return "admin/teacher-form";
+        }
+
         teacher.setName(form.getName());
+        teacher.setGender(form.getGender());
+        teacher.setClassroom(classroom);
         teacher.setClassMotto(form.getClassMotto());
         teacher.setTalkTo(form.getTalkTo());
         teacher.setPromise(form.getPromise());
-        teacher.setTeacherPhotoUrl(form.getTeacherPhotoUrl());
-        teacher.setTeacherVideoLetterUrl(form.getTeacherVideoLetterUrl());
-        teacher.setGender(form.getGender());
-        
+
         try {
-            if (teacherPhotoFile != null && !teacherPhotoFile.isEmpty()) {
-                teacher.setTeacherPhoto(teacherPhotoFile.getBytes());
-            }
-            if (teacherVideoLetterFile != null && !teacherVideoLetterFile.isEmpty()) {
-                teacher.setTeacherVideoLetter(teacherVideoLetterFile.getBytes());
-            }
+            saveFiles(teacher, teacherPhotoFile, teacherVideoLetterFile);
         } catch (IOException e) {
-            model.addAttribute("error", "파일 업로드 실패: " + e.getMessage());
-            model.addAttribute("classrooms", classroomRepository.findAll()
-                    .stream().sorted((a, b) -> Integer.compare(a.getClassNum(), b.getClassNum())).toList());
+            model.addAttribute("error", "파일 저장 실패");
             return "admin/teacher-form";
         }
-        
+
         teacherRepository.save(teacher);
         return "redirect:/admin/teachers";
     }
+
+    /* ===================== 삭제 ===================== */
 
     @PostMapping("/{id}/delete")
     public String delete(HttpSession session, @PathVariable Long id) {
@@ -148,6 +148,27 @@ public class AdminTeacherController {
         teacherRepository.deleteById(id);
         return "redirect:/admin/teachers";
     }
+
+    /* ===================== 파일 저장 공통 ===================== */
+
+    private void saveFiles(Teacher teacher,
+                           MultipartFile photo,
+                           MultipartFile video) throws IOException {
+
+        if (photo != null && !photo.isEmpty()) {
+            Files.createDirectories(Paths.get(PHOTO_DIR));
+            String filename = UUID.randomUUID() + "_" + photo.getOriginalFilename();
+            Path path = Paths.get(PHOTO_DIR, filename);
+            photo.transferTo(path);
+            teacher.setTeacherPhotoUrl(path.toString());
+        }
+
+        if (video != null && !video.isEmpty()) {
+            Files.createDirectories(Paths.get(VIDEO_DIR));
+            String filename = UUID.randomUUID() + "_" + video.getOriginalFilename();
+            Path path = Paths.get(VIDEO_DIR, filename);
+            video.transferTo(path);
+            teacher.setTeacherVideoLetterUrl(path.toString());
+        }
+    }
 }
-
-

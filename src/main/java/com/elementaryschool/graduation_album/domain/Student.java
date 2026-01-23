@@ -41,16 +41,19 @@ public class Student {
     @Size(max = 255)
     private String personalPhotoUrl;
 
-    @Lob
-    @Column(columnDefinition = "BLOB")
-    private byte[] personalPhoto;
+    /** 📸 학생 사진 파일 경로 */
+    @Size(max = 255)
+    @Column(length = 255)
+    private String personalPhoto;
 
     @Size(max = 255)
     private String handLetterPhotoUrl;
 
-    @Lob
-    @Column(columnDefinition = "BLOB")
-    private byte[] handLetterPhoto;
+
+    /** 🎥 학생 손글씨 사진 파일 경로 */
+    @Size(max = 255)
+    @Column(length = 255)
+    private String handLetterPhoto;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 1)

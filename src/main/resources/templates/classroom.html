@@ -53,7 +53,9 @@
                         <div class="d-flex gap-3">
                             <img class="rounded border"
                                  style="width:120px;height:150px;object-fit:cover"
-                                 th:src="${teacher.teacherPhoto != null} ? @{|/api/files/teachers/${teacher.id}/photo|} : (${teacher.teacherPhotoUrl != null} ? ${teacher.teacherPhotoUrl} : 'https://placehold.co/200x250?text=Teacher')"
+                                 th:src="${teacher != null && teacher.teacherPhotoPath != null}
+                                    ? @{|/api/files/teachers/${teacher.id}/photo|}
+                                    : 'https://placehold.co/200x250?text=Teacher'"
                                  alt="선생님 사진">
                             <div>
                                 <div class="fw-bold" th:text="${teacher.name}">선생님 이름</div>
@@ -69,17 +71,11 @@
                         <div class="small mb-2" th:text="${teacher.talkTo}">학생들에게</div>
                         <div class="small fw-bold">우리반 약속</div>
                         <div class="small mb-3" th:text="${teacher.promise}">약속</div>
-                        <div th:if="${classroom.classVideoLetter != null || classroom.classVideoLetterUrl != null}" class="mb-2">
+                        <div th:if="${teacher != null && teacher.teacherVideoLetter != null}" class="mb-2">
                             <div class="small fw-bold mb-2 px-3 pt-3">담임선생님 영상편지</div>
-                            <video controls style="width:100%;max-height:300px;border-radius:8px;" 
-                                   th:if="${classroom.classVideoLetter != null}">
-                                <source th:src="@{|/api/files/classrooms/${classroom.id}/video-letter|}" type="video/mp4">
-                                브라우저가 비디오 태그를 지원하지 않습니다.
-                            </video>
-                            <video controls style="width:100%;max-height:300px;border-radius:8px;" 
-                                   th:if="${classroom.classVideoLetter == null && classroom.classVideoLetterUrl != null}">
-                                <source th:src="${classroom.classVideoLetterUrl}" type="video/mp4">
-                                브라우저가 비디오 태그를 지원하지 않습니다.
+                            <video controls
+                                   style="width:100%;max-height:300px;border-radius:8px;"
+                                   th:src="@{|/api/files/teachers/${teacher.id}/video-letter|}">
                             </video>
                         </div>
                     </div>
@@ -90,8 +86,11 @@
             <div class="card shadow-sm mb-3">
                 <img class="card-img-top"
                      style="max-height:260px;object-fit:cover"
-                     th:src="${classroom.classGroupPhoto != null} ? @{|/api/files/classrooms/${classroom.id}/group-photo|} : (${classroom.classGroupPhotoUrl != null} ? ${classroom.classGroupPhotoUrl} : 'https://placehold.co/900x300?text=Group+Photo')"
+                     th:src="${classroom.classGroupPhoto != null}
+                        ? @{|/api/files/classrooms/${classroom.id}/group-photo|}
+                        : 'https://placehold.co/900x300?text=Group+Photo'"
                      alt="반 단체 사진">
+
             </div>
 
             <div class="card shadow-sm mb-3">
@@ -99,39 +98,40 @@
                     <h2 class="h6 fw-bold mb-3">자리 배치(이름 클릭)</h2>
                     <div class="desk-grid">
                         <div class="desk" th:each="s : ${students}">
-                            <a th:href="@{|/students/${s.id}|}" class="fw-bold" th:text="${s.name}">학생</a>
+                            <a th:href="@{|/students/${s.id}|}"
+                               class="fw-bold"
+                               th:text="${s.name}">학생</a>
 
-                            <!-- 학생 성별 -->
-                            <!-- <div class="small text-muted" th:text="${s.gender}">M</div> -->
+                            <!-- ✅ 성별 표시 (M/W → 남자/여자) -->
+                            <div class="small text-muted"
+                                 th:text="${s.gender == T(com.elementaryschool.graduation_album.domain.Gender).M ? '남자' : '여자'}">
+                                남자
+                            </div>
 
-                            <!-- 학생 개인 사진 -->
+                            <!-- ✅ 학생 개인 사진 -->
                             <img class="rounded border"
                                  style="width:70px;height:100px;object-fit:cover"
                                  th:src="${s.personalPhoto != null}
-                                ? @{|/api/files/students/${s.id}/personal-photo|}
-                                : (${s.personalPhotoUrl != null}
-                                    ? ${s.personalPhotoUrl}
-                                    : 'https://placehold.co/100x100?text=Student')"
+                                    ? @{|/api/files/students/${s.id}/personal-photo|}
+                                    : 'https://placehold.co/100x100?text=Student'"
                                  alt="학생 사진">
-
                         </div>
-                    <div th:if="${#lists.isEmpty(students)}" class="text-muted mt-2">등록된 학생이 없습니다.</div>
+                    </div>
+
+                    <div th:if="${#lists.isEmpty(students)}"
+                         class="text-muted mt-2">
+                        등록된 학생이 없습니다.
+                    </div>
+
+                </div>
+                <div th:if="${classroom.studentVideoLetter != null}" class="mb-2">
+                    <div class="small fw-bold mb-2 px-3 pt-3">학생들의 영상편지</div>
+                    <video controls
+                           style="width:100%;max-height:300px;border-radius:8px;"
+                           th:src="@{|/api/files/classrooms/${classroom.id}/student-video-letter|}">
+                    </video>
                 </div>
             </div>
-            <div th:if="${classroom.studentVideoLetter != null || classroom.studentVideoLetter != null}" class="mb-2">
-                <div class="small fw-bold mb-2 px-3 pt-3">학생들의 영상편지</div>
-                <video controls style="width:100%;max-height:300px;border-radius:8px;"
-                       th:if="${classroom.studentVideoLetter != null}">
-                    <source th:src="@{|/api/files/classrooms/${classroom.id}/student-video-letter|}" type="video/mp4">
-                    브라우저가 비디오 태그를 지원하지 않습니다.
-                </video>
-                <video controls style="width:100%;max-height:300px;border-radius:8px;"
-                       th:if="${classroom.studentVideoLetter == null && classroom.studentVideoLetterUrl != null}">
-                    <source th:src="${classroom.studentVideoLetterUrl}" type="video/mpg">
-                    브라우저가 비디오 태그를 지원하지 않습니다.
-                </video>
-            </div>
-    </div>
 </main>
 </body>
 </html>

@@ -32,23 +32,24 @@ public class Classroom {
     @Size(max = 255)
     private String classGroupPhotoUrl;
 
-    @Lob
-    @Column(columnDefinition = "BLOB")
-    private byte[] classGroupPhoto;
+    /** 🎥 학생 단체사진 파일 경로 */
+    private String classGroupPhoto;
 
     @Size(max = 255)
     private String classVideoLetterUrl;
 
-    @Lob
-    @Column(columnDefinition = "BLOB")
-    private byte[] classVideoLetter;
+    /** 🎥 교사  영상 파일 경로 */
+    @Size(max = 255)
+    @Column(length = 255)
+    private String classVideoLetter;
 
     @Size(max = 255)
     private String studentVideoLetterUrl;
 
-    @Lob
-    @Column(columnDefinition = "BLOB")
-    private byte[] studentVideoLetter;
+    /** 🎥 학생들 영상 파일 경로 */
+    @Size(max = 255)
+    @Column(length = 255)
+    private String studentVideoLetter;
 
 }
 

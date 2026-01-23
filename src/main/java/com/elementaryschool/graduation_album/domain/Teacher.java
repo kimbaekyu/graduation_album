@@ -45,16 +45,19 @@ public class Teacher {
     @Size(max = 255)
     private String teacherPhotoUrl;
 
-    @Lob
-    @Column(columnDefinition = "BLOB")
-    private byte[] teacherPhoto;
+    /** 📸 교사 사진 파일 경로 */
+    @Size(max = 255)
+    @Column(length = 255)
+    private String teacherPhoto;
 
     @Size(max = 255)
     private String teacherVideoLetterUrl;
 
-    @Lob
-    @Column(columnDefinition = "BLOB")
-    private byte[] teacherVideoLetter;
+
+    /** 🎥 교사 영상 파일 경로 */
+    @Size(max = 255)
+    @Column(length = 255)
+    private String teacherVideoLetter;
 
 
     @Enumerated(EnumType.STRING)
