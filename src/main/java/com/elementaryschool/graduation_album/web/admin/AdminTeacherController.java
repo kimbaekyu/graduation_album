@@ -77,11 +77,7 @@ public class AdminTeacherController {
 
         // 2️⃣ 사진 업로드 (있을 때만)
         if (teacherPhotoFile != null && !teacherPhotoFile.isEmpty()) {
-            String path = fileStorageService.savePhoto(
-                    teacherPhotoFile,
-                    "photos/teacher",
-                    teacher.getId()
-            );
+            String path = fileStorageService.savePhoto(teacherPhotoFile, "photos/teachers");
             teacher.setTeacherPhoto(path);
         }
 
@@ -136,7 +132,7 @@ public class AdminTeacherController {
         if (teacherPhotoFile != null && !teacherPhotoFile.isEmpty()) {
             String path = fileStorageService.savePhoto(
                     teacherPhotoFile,
-                    "photos/teacher",
+                    "photos/teachers",
                     teacher.getId()
             );
             teacher.setTeacherPhoto(path);

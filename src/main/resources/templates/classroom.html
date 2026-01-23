@@ -54,7 +54,7 @@
                             <img class="rounded border"
                                  style="width:120px;height:150px;object-fit:cover"
                                  th:src="${teacher != null && teacher.teacherPhoto != null}
-                                    ? @{|/media/teachers/${teacher.id}/photo|}
+                                    ? @{|/media/photo/teachers/${teacher.id}|}
                                     : 'https://placehold.co/200x250?text=Teacher'"
                                  alt="선생님 사진">
                             <div>
@@ -76,7 +76,7 @@
                             <video controls
                                    style="width:100%;max-height:300px;border-radius:8px;"
                                    th:if="${classroom.classVideoLetter != null}">
-                                <source th:src="@{|/media/teacher/${classroom.classNum}/video|}" type="video/mp4">
+                                <source th:src="@{|/media/video/teachers/${classroom.classNum}|}" type="video/mp4">
                             </video>
                         </div>
                     </div>
@@ -88,7 +88,7 @@
                 <img class="card-img-top"
                      style="max-height:260px;object-fit:cover"
                      th:src="${classroom.classGroupPhoto != null}
-                        ? @{|/media/classrooms/${classroom.classNum}/photo|}
+                        ? @{|/media/photo/classrooms/${classroom.classNum}|}
                         : 'https://placehold.co/900x300?text=Group+Photo'"
                      alt="반 단체 사진">
 
@@ -113,7 +113,7 @@
                             <img class="rounded border"
                                  style="width:70px;height:100px;object-fit:cover"
                                  th:src="${s.personalPhoto != null}
-                                    ? @{|/media/students/${s.id}/${s.id}/photo|}
+                                    ? @{|/media/photo/students/${s.classroom.classNum}/${s.id}|}
                                     : 'https://placehold.co/100x100?text=Student'"
                                  alt="학생 사진">
                         </div>
@@ -129,7 +129,7 @@
                     <div class="small fw-bold mb-2 px-3 pt-3">학생들의 영상편지</div>
                     <video controls
                            style="width:100%;max-height:300px;border-radius:8px;"
-                           th:src="@{|/media/student/${classroom.classNum}/video|}">
+                           th:src="@{|/media/video/students/${classroom.classNum}|}">
                         비디오 태그 지원안함
                     </video>
                 </div>

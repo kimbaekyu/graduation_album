@@ -69,7 +69,7 @@ public class AdminClassroomController {
         classroomRepository.save(classroom);
         return "redirect:/admin/classes";
     }
-
+    // GET/POST 모두 id로 조회 → 안정적
     @GetMapping("/{id}/edit")
     public String editForm(HttpSession session,
                            @PathVariable Long id,
@@ -109,31 +109,19 @@ public class AdminClassroomController {
 
         // 📸 단체 사진
         if (groupPhotoFile != null && !groupPhotoFile.isEmpty()) {
-            String path = fileStorageService.save(
-                    groupPhotoFile,
-                    "photos/classrooms",
-                    classroom.getId() + ".jpg"
-            );
+            String path = fileStorageService.savePhoto(groupPhotoFile, "photos/classrooms");
             classroom.setClassGroupPhoto(path);
         }
 
         // 🎥 교사 영상
         if (videoLetterFile != null && !videoLetterFile.isEmpty()) {
-            String path = fileStorageService.saveVideo(
-                    videoLetterFile,
-                    "videos/teacher",
-                    String.format("%02d", classroom.getClassNum())
-            );
+            String path = fileStorageService.saveVideo(videoLetterFile, "videos/teachers");
             classroom.setClassVideoLetter(path);
         }
 
         // 🎥 학생 영상
         if (studentVideoLetterFile != null && !studentVideoLetterFile.isEmpty()) {
-            String path = fileStorageService.saveVideo(
-                    studentVideoLetterFile,
-                    "videos/student",
-                    String.format("%02d", classroom.getClassNum())
-            );
+            String path = fileStorageService.saveVideo(studentVideoLetterFile, "videos/students");
             classroom.setStudentVideoLetter(path);
         }
 

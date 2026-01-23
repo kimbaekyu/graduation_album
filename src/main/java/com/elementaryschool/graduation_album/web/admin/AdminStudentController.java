@@ -4,6 +4,7 @@ import com.elementaryschool.graduation_album.domain.Classroom;
 import com.elementaryschool.graduation_album.domain.Student;
 import com.elementaryschool.graduation_album.repository.ClassroomRepository;
 import com.elementaryschool.graduation_album.repository.StudentRepository;
+import com.elementaryschool.graduation_album.service.FileStorageService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -34,11 +35,15 @@ public class AdminStudentController {
 
     private final StudentRepository studentRepository;
     private final ClassroomRepository classroomRepository;
+    private final FileStorageService fileStorageService; // ✅ 주입
 
+    // 생성자에서 주입
     public AdminStudentController(StudentRepository studentRepository,
-                                  ClassroomRepository classroomRepository) {
+                                  ClassroomRepository classroomRepository,
+                                  FileStorageService fileStorageService) {
         this.studentRepository = studentRepository;
         this.classroomRepository = classroomRepository;
+        this.fileStorageService = fileStorageService;
     }
 
     /* ================= 목록 ================= */
@@ -70,10 +75,12 @@ public class AdminStudentController {
                          @RequestParam("classroomId") Long classroomId,
                          @RequestParam(value = "personalPhotoFile", required = false) MultipartFile personalPhotoFile,
                          @RequestParam(value = "handLetterPhotoFile", required = false) MultipartFile handLetterPhotoFile,
-                         Model model) {
+                         Model model) throws IOException {
+        if (bindingResult.hasErrors()) return "admin/student-form";
 
         AdminGuard.requireAdmin(session);
 
+        // 학급 설정
         Classroom classroom = classroomRepository.findById(classroomId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST));
         student.setClassroom(classroom);
@@ -87,10 +94,10 @@ public class AdminStudentController {
         studentRepository.save(student);
 
         try {
+            // ✅ saveFiles에서 UUID 기반 저장으로 수정
             saveFiles(student, personalPhotoFile, handLetterPhotoFile);
         } catch (IOException e) {
-            throw new ResponseStatusException(
-                    HttpStatus.INTERNAL_SERVER_ERROR, "파일 저장 실패", e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "파일 저장 실패", e);
         }
 
         studentRepository.save(student);
@@ -164,41 +171,24 @@ public class AdminStudentController {
                            MultipartFile personalPhotoFile,
                            MultipartFile handLetterPhotoFile) throws IOException {
 
-        Integer classNum = student.getClassroom().getClassNum();
-        String classDir = String.format("%02d", classNum); // 01, 02
-        Long id = student.getId();
-
-        if (id == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "학생 ID가 없습니다.");
-        }
-
-        Path base = Paths.get(basePath);
+        String classDir = String.format("%02d", student.getClassroom().getClassNum()); // 01, 02
 
         // 📸 개인 사진
         if (personalPhotoFile != null && !personalPhotoFile.isEmpty()) {
-
-            Path dir = base.resolve("photos/students").resolve(classDir);
-            Files.createDirectories(dir);
-
-            Path file = dir.resolve(id + ".jpg");
-            personalPhotoFile.transferTo(file.toFile());
-
-            // ❌ DB에 경로 저장 안 함
-            student.setPersonalPhoto("photos/students/" + classDir + "/" + id + ".jpg");
+            String relativePath = fileStorageService.savePhoto(
+                    personalPhotoFile,
+                    "photos/students/" + classDir // UUID로 파일명 자동 생성
+            );
+            student.setPersonalPhoto(relativePath);
         }
 
         // ✍ 손글씨 사진
         if (handLetterPhotoFile != null && !handLetterPhotoFile.isEmpty()) {
-
-            Path dir = base.resolve("photos/students").resolve(classDir);
-            Files.createDirectories(dir);
-
-            Path file = dir.resolve(id + " (2).jpg");
-            handLetterPhotoFile.transferTo(file.toFile());
-
-            // ❌ DB에 경로 저장 안 함
-            student.setHandLetterPhoto("photos/students/" + classDir + "/" + id + " (2).jpg");
+            String relativePath = fileStorageService.savePhoto(
+                    handLetterPhotoFile,
+                    "photos/students/" + classDir // UUID로 파일명 자동 생성
+            );
+            student.setHandLetterPhoto(relativePath);
         }
     }
-
 }

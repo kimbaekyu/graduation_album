@@ -34,6 +34,7 @@ public class ClassroomController {
         model.addAttribute("classroom", classroom);
         model.addAttribute("teacher", teacherRepository.findByClassroom(classroom).orElse(null));
         model.addAttribute("students", studentRepository.findAllByClassroomOrderByNameAsc(classroom));
+
         return "classroom";
     }
 }

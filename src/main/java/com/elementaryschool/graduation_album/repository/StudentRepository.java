@@ -20,6 +20,7 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
     
     @EntityGraph(attributePaths = {"classroom"})
     List<Student> findAllByClassroomOrderByNameAsc(Classroom classroom);
+
 }
 
 

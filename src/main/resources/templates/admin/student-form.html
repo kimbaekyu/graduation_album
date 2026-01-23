@@ -60,7 +60,7 @@
                             <small class="text-muted">파일을 선택하면 H2 DB에 저장됩니다. (선택사항)</small>
                         </div>
                         <div th:if="${student.id != null && student.personalPhoto != null}" class="mt-2">
-                            <img th:src="@{|/media/students/${student.id}/personal-photo|}"
+                            <img th:src="@{|/media/photo/students/${student.classroom.classNum}/${student.Id}|}"
                                  style="max-width: 200px; max-height: 240px; object-fit: cover;" 
                                  class="border rounded" alt="현재 사진">
                         </div>
@@ -72,7 +72,7 @@
                             <small class="text-muted">파일을 선택하면 H2 DB에 저장됩니다. (선택사항)</small>
                         </div>
                         <div th:if="${student.id != null && student.handLetterPhoto != null}" class="mt-2">
-                            <img th:src="@{|/media/students/${student.id}/hand-letter|}"
+                            <img th:src="@{|/media/photo/students/hand-letter/${student.classroom.classNum}/${student.Id}|}"
                                  style="max-width: 300px; max-height: 200px; object-fit: cover;" 
                                  class="border rounded" alt="현재 사진">
                         </div>
