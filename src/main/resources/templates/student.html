@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${student.name} + ' - 졸업 앨범'">학생 - 졸업 앨범</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .photo { width: 100%; max-width: 320px; aspect-ratio: 11/13; object-fit: cover; }
+        .hand { width: 100%; max-width: 520px; object-fit: cover; }
+    </style>
+</head>
+<body class="bg-light">
+<nav class="navbar navbar-light bg-white border-bottom">
+    <div class="container">
+        <a class="navbar-brand fw-bold" th:href="@{/}">졸업 앨범</a>
+        <div class="d-flex gap-2">
+            <a class="btn btn-sm btn-outline-secondary" th:href="@{/admin}">관리자</a>
+        </div>
+    </div>
+</nav>
+
+<main class="container py-4">
+    <div class="d-flex flex-wrap align-items-end justify-content-between gap-2 mb-3">
+        <div>
+            <h1 class="h3 fw-bold mb-1" th:text="${student.name}">이름</h1>
+            <div class="text-muted">
+                <span th:text="${student.classroom.classNum} + '반'">1반</span>
+                · 성별 <span th:text="${student.gender}">M</span>
+            </div>
+        </div>
+        <a class="btn btn-outline-primary" th:href="@{|/classes/${student.classroom.classNum}|}">반 페이지로</a>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <img class="rounded border photo"
+                         th:src="${student.personalPhoto != null} ? @{|/api/files/students/${student.id}/personal-photo|} : (${student.personalPhotoUrl != null} ? ${student.personalPhotoUrl} : 'https://placehold.co/220x260?text=Student')"
+                         alt="개인 사진">
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-3">
+                <div class="card-body">
+                    <div class="fw-bold mb-1">소망</div>
+                    <div class="text-muted" th:text="${student.motto}">소망</div>
+                </div>
+            </div>
+            <div class="card shadow-sm mb-3">
+                <div class="card-body">
+                    <div class="fw-bold mb-1">하고 싶은 말</div>
+                    <div class="text-muted" th:text="${student.talk}">하고 싶은 말</div>
+                </div>
+            </div>
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="fw-bold mb-2">손편지 사진</div>
+                    <img class="rounded border hand"
+                         th:src="${student.handLetterPhoto != null} ? @{|/api/files/students/${student.id}/hand-letter-photo|} : (${student.handLetterPhotoUrl != null} ? ${student.handLetterPhotoUrl} : 'https://placehold.co/520x360?text=Hand+Letter')"
+                         alt="손편지 사진">
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+</body>
+</html>
+
+
