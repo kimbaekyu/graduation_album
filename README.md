@@ -246,11 +246,6 @@ MediaController에서는 classNum 기반으로 파일을 조회하여 404 오류
 
 * HTTPS 적용 가능
 
-## ✨ 한 줄 요약
-
-> Spring Boot 기반으로 파일 업로드, 미디어 스트리밍,
-> NAS 배포까지 고려한 온라인 졸업 앨범 웹 서비스입니다.
-
 ## 🚀 향후 개선 사항
 
 * Spring Security 기반 인증/인가
