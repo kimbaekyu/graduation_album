@@ -42,23 +42,10 @@ public class Teacher {
     @Column(length = 500)
     private String promise;
 
-    @Size(max = 255)
-    private String teacherPhotoUrl;
-
     /** 📸 교사 사진 파일 경로 */
     @Size(max = 255)
     @Column(length = 255)
     private String teacherPhoto;
-
-    @Size(max = 255)
-    private String teacherVideoLetterUrl;
-
-
-    /** 🎥 교사 영상 파일 경로 */
-    @Size(max = 255)
-    @Column(length = 255)
-    private String teacherVideoLetter;
-
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 1)

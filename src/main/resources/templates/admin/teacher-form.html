@@ -63,12 +63,9 @@
                             <input type="file" class="form-control" name="teacherPhotoFile" accept="image/*">
                             <small class="text-muted">파일을 선택하면 H2 DB에 저장됩니다. (선택사항)</small>
                         </div>
-                        <div class="mb-2">
-                            <label class="form-label small">또는 URL 입력</label>
-                            <input class="form-control" th:field="*{teacherPhotoUrl}" placeholder="https://...">
-                        </div>
+                        <!-- 현재 사진 표시 -->
                         <div th:if="${teacher.id != null && teacher.teacherPhoto != null}" class="mt-2">
-                            <img th:src="@{|/api/files/teachers/${teacher.id}/photo|}" 
+                            <img th:src="@{|/media/teachers/${teacher.id}/photo|}"
                                  style="max-width: 200px; max-height: 250px; object-fit: cover;" 
                                  class="border rounded" alt="현재 사진">
                         </div>

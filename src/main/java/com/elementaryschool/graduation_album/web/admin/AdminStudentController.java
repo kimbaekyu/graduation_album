@@ -10,11 +10,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
+import java.nio.file.StandardOpenOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -23,10 +25,12 @@ import java.nio.file.Paths;
 @RequestMapping("/admin/students")
 public class AdminStudentController {
 
-    private static final String PHOTO_DIR =
-            "/volume1/docker/elementary_album/data/Photos/students";
-    private static final String HANDLETTER_DIR =
-            "/volume1/docker/elementary_album/data/Photos/handletters";
+    /**
+     * NAS/볼륨 마운트 경로 (컨테이너/호스트 환경에 따라 설정)
+     * DB에는 상대경로만 저장한다.
+     */
+    @Value("${app.media.base-path:/data/}")
+    private String basePath;
 
     private final StudentRepository studentRepository;
     private final ClassroomRepository classroomRepository;
@@ -160,19 +164,41 @@ public class AdminStudentController {
                            MultipartFile personalPhotoFile,
                            MultipartFile handLetterPhotoFile) throws IOException {
 
-        Files.createDirectories(Paths.get(PHOTO_DIR));
-        Files.createDirectories(Paths.get(HANDLETTER_DIR));
+        Integer classNum = student.getClassroom().getClassNum();
+        String classDir = String.format("%02d", classNum); // 01, 02
+        Long id = student.getId();
 
-        if (personalPhotoFile != null && !personalPhotoFile.isEmpty()) {
-            Path path = Paths.get(PHOTO_DIR, student.getId() + ".jpg");
-            Files.write(path, personalPhotoFile.getBytes());
-            student.setPersonalPhoto(path.toString());
+        if (id == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "학생 ID가 없습니다.");
         }
 
+        Path base = Paths.get(basePath);
+
+        // 📸 개인 사진
+        if (personalPhotoFile != null && !personalPhotoFile.isEmpty()) {
+
+            Path dir = base.resolve("photos/students").resolve(classDir);
+            Files.createDirectories(dir);
+
+            Path file = dir.resolve(id + ".jpg");
+            personalPhotoFile.transferTo(file.toFile());
+
+            // ❌ DB에 경로 저장 안 함
+            student.setPersonalPhoto("photos/students/" + classDir + "/" + id + ".jpg");
+        }
+
+        // ✍ 손글씨 사진
         if (handLetterPhotoFile != null && !handLetterPhotoFile.isEmpty()) {
-            Path path = Paths.get(HANDLETTER_DIR, student.getId() + ".jpg");
-            Files.write(path, handLetterPhotoFile.getBytes());
-            student.setHandLetterPhoto(path.toString());
+
+            Path dir = base.resolve("photos/students").resolve(classDir);
+            Files.createDirectories(dir);
+
+            Path file = dir.resolve(id + " (2).jpg");
+            handLetterPhotoFile.transferTo(file.toFile());
+
+            // ❌ DB에 경로 저장 안 함
+            student.setHandLetterPhoto("photos/students/" + classDir + "/" + id + " (2).jpg");
         }
     }
+
 }

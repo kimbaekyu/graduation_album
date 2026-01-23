@@ -29,22 +29,14 @@ public class Classroom {
     @Column(nullable = false, length = 50)
     private String homeroomTeacher;
 
-    @Size(max = 255)
-    private String classGroupPhotoUrl;
-
     /** 🎥 학생 단체사진 파일 경로 */
+    @Column(length = 255)
     private String classGroupPhoto;
-
-    @Size(max = 255)
-    private String classVideoLetterUrl;
 
     /** 🎥 교사  영상 파일 경로 */
     @Size(max = 255)
     @Column(length = 255)
     private String classVideoLetter;
-
-    @Size(max = 255)
-    private String studentVideoLetterUrl;
 
     /** 🎥 학생들 영상 파일 경로 */
     @Size(max = 255)

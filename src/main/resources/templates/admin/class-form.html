@@ -37,12 +37,8 @@
                             <input type="file" class="form-control" name="groupPhotoFile" accept="image/*">
                             <small class="text-muted">파일을 선택하면 H2 DB에 저장됩니다. (선택사항)</small>
                         </div>
-                        <div class="mb-2">
-                            <label class="form-label small">또는 URL 입력</label>
-                            <input class="form-control" th:field="*{classGroupPhotoUrl}" placeholder="https://...">
-                        </div>
-                        <div th:if="${classroom.id != null && classroom.classGroupPhoto != null}" class="mt-2">
-                            <img th:src="@{|/api/files/classrooms/${classroom.id}/group-photo|}" 
+                        <div th:if="${classroom.classNum != null && classroom.classGroupPhoto != null}" class="mt-2">
+                            <img th:src="@{|/media/classrooms/${classroom.classNum}/photo|}"
                                  style="max-width: 500px; max-height: 300px; object-fit: cover;" 
                                  class="border rounded" alt="현재 사진">
                         </div>
@@ -53,13 +49,9 @@
                             <input type="file" class="form-control" name="videoLetterFile" accept="video/*">
                             <small class="text-muted">파일을 선택하면 H2 DB에 저장됩니다. (선택사항)</small>
                         </div>
-                        <div class="mb-2">
-                            <label class="form-label small">또는 URL 입력</label>
-                            <input class="form-control" th:field="*{classVideoLetterUrl}" placeholder="https://...">
-                        </div>
-                        <div th:if="${classroom.id != null && classroom.classVideoLetter != null}" class="mt-2">
+                        <div th:if="${classroom.classNum != null && classroom.classVideoLetter != null}" class="mt-2">
                             <small class="text-muted">영상편지가 업로드되어 있습니다.</small>
-                            <a th:href="@{|/api/files/classrooms/${classroom.id}/video-letter|}" 
+                            <a th:href="@{|/media/classrooms/${classroom.classNum}/video-letter|}"
                                class="btn btn-sm btn-outline-primary mt-2" target="_blank">영상 다운로드</a>
                         </div>
                     </div>
@@ -69,13 +61,9 @@
                             <input type="file" class="form-control" name="studentVideoLetterFile" accept="video/*">
                             <small class="text-muted">파일을 선택하면 H2 DB에 저장됩니다. (선택사항)</small>
                         </div>
-                        <div class="mb-2">
-                            <label class="form-label small">또는 URL 입력</label>
-                            <input class="form-control" th:field="*{studentVideoLetterUrl}" placeholder="https://...">
-                        </div>
-                        <div th:if="${classroom.id != null && classroom.studentVideoLetter != null}" class="mt-2">
+                        <div th:if="${classroom.classNum != null && classroom.studentVideoLetter != null}" class="mt-2">
                             <small class="text-muted">영상편지가 업로드되어 있습니다.</small>
-                            <a th:href="@{|/api/files/classrooms/${classroom.id}/student-video-letter|}"
+                            <a th:href="@{|/media/classrooms/${classroom.classNum}/student-video-letter|}"
                                class="btn btn-sm btn-outline-primary mt-2" target="_blank">영상 다운로드</a>
                         </div>
                     </div>

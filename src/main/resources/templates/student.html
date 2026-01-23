@@ -39,7 +39,7 @@
                 <div class="card-body text-center">
                     <img class="rounded border photo"
                          th:src="${student.personalPhoto != null}
-                            ? @{|/api/files/students/${student.id}/personal-photo|}
+                            ? @{|/media/students/${student.classroom.classNum}/${student.id}/photo|}
                             : 'https://placehold.co/220x260?text=Student'"
                     alt="개인 사진">
 
@@ -64,7 +64,7 @@
                     <div class="fw-bold mb-2">손편지 사진</div>
                     <img class="rounded border hand"
                          th:src="${student.handLetterPhoto != null}
-                            ? @{|/api/files/students/${student.id}/hand-letter|}
+                            ? @{|/media/students/${student.classroom.classNum}/${student.Id}/hand-letter|}
                             : 'https://placehold.co/520x360?text=Hand+Letter'"
                     alt="손편지 사진">
                 </div>

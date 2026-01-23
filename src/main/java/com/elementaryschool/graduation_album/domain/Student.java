@@ -38,17 +38,10 @@ public class Student {
     @Column(length = 500)
     private String talk;
 
-    @Size(max = 255)
-    private String personalPhotoUrl;
-
     /** 📸 학생 사진 파일 경로 */
     @Size(max = 255)
     @Column(length = 255)
     private String personalPhoto;
-
-    @Size(max = 255)
-    private String handLetterPhotoUrl;
-
 
     /** 🎥 학생 손글씨 사진 파일 경로 */
     @Size(max = 255)

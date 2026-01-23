@@ -2,6 +2,7 @@ package com.elementaryschool.graduation_album.web.admin;
 
 import com.elementaryschool.graduation_album.domain.Classroom;
 import com.elementaryschool.graduation_album.repository.ClassroomRepository;
+import com.elementaryschool.graduation_album.service.FileStorageService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -19,9 +20,13 @@ import java.io.IOException;
 public class AdminClassroomController {
 
     private final ClassroomRepository classroomRepository;
+    private final FileStorageService fileStorageService;
 
-    public AdminClassroomController(ClassroomRepository classroomRepository) {
+    public AdminClassroomController(ClassroomRepository classroomRepository,
+                                    FileStorageService fileStorageService)
+    {
         this.classroomRepository = classroomRepository;
+        this.fileStorageService = fileStorageService;
     }
 
     @GetMapping
@@ -47,7 +52,10 @@ public class AdminClassroomController {
     public String create(HttpSession session,
                          @Valid @ModelAttribute("classroom") Classroom classroom,
                          BindingResult bindingResult,
-                         Model model) {
+                         @RequestParam(value = "groupPhotoFile", required = false) MultipartFile groupPhotoFile,
+                         @RequestParam(value = "videoLetterFile", required = false) MultipartFile videoLetterFile,
+                         @RequestParam(value = "studentVideoLetterFile", required = false) MultipartFile studentVideoLetterFile,
+                         Model model) throws IOException {
 
         AdminGuard.requireAdmin(session);
 
@@ -81,7 +89,10 @@ public class AdminClassroomController {
                        @PathVariable Long id,
                        @Valid @ModelAttribute("classroom") Classroom form,
                        BindingResult bindingResult,
-                       Model model) {
+                       @RequestParam(required = false) MultipartFile groupPhotoFile,
+                       @RequestParam(required = false) MultipartFile videoLetterFile,
+                       @RequestParam(required = false) MultipartFile studentVideoLetterFile,
+                       Model model)throws IOException {
 
         AdminGuard.requireAdmin(session);
 
@@ -96,15 +107,35 @@ public class AdminClassroomController {
         classroom.setClassNum(form.getClassNum());
         classroom.setHomeroomTeacher(form.getHomeroomTeacher());
 
-        // 📸 사진 / 🎥 영상 경로만 저장
-        classroom.setClassGroupPhoto(form.getClassGroupPhoto());
-        classroom.setClassGroupPhotoUrl(form.getClassGroupPhotoUrl());
+        // 📸 단체 사진
+        if (groupPhotoFile != null && !groupPhotoFile.isEmpty()) {
+            String path = fileStorageService.save(
+                    groupPhotoFile,
+                    "photos/classrooms",
+                    classroom.getId() + ".jpg"
+            );
+            classroom.setClassGroupPhoto(path);
+        }
 
-        classroom.setClassVideoLetter(form.getClassVideoLetter());
-        classroom.setClassVideoLetterUrl(form.getClassVideoLetterUrl());
+        // 🎥 교사 영상
+        if (videoLetterFile != null && !videoLetterFile.isEmpty()) {
+            String path = fileStorageService.saveVideo(
+                    videoLetterFile,
+                    "videos/teacher",
+                    String.format("%02d", classroom.getClassNum())
+            );
+            classroom.setClassVideoLetter(path);
+        }
 
-        classroom.setStudentVideoLetter(form.getStudentVideoLetter());
-        classroom.setStudentVideoLetterUrl(form.getStudentVideoLetterUrl());
+        // 🎥 학생 영상
+        if (studentVideoLetterFile != null && !studentVideoLetterFile.isEmpty()) {
+            String path = fileStorageService.saveVideo(
+                    studentVideoLetterFile,
+                    "videos/student",
+                    String.format("%02d", classroom.getClassNum())
+            );
+            classroom.setStudentVideoLetter(path);
+        }
 
         classroomRepository.save(classroom);
         return "redirect:/admin/classes";
@@ -116,6 +147,7 @@ public class AdminClassroomController {
         classroomRepository.deleteById(id);
         return "redirect:/admin/classes";
     }
+
 }
 
 
